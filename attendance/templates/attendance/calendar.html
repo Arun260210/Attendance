@@ -1,0 +1,23 @@
+<h2>{{ month }}/{{ year }} Attendance</h2>
+<table border="1" style="border-collapse:collapse; text-align:center;">
+    <tr>
+        {% for day, status in days %}
+            <td style="width:40px; height:40px; background-color:
+                {% if status == 'present' %}lightgreen
+                {% elif status == 'absent' %}orange
+                {% elif status == 'holiday' %}lightblue
+                {% endif %}
+            ">
+                {{ day.day }}
+            </td>
+            {% if forloop.counter0|add:1|divisibleby:7 %}
+                </tr><tr>
+            {% endif %}
+        {% endfor %}
+    </tr>
+</table>
+
+<p>
+    ✅ Present = Green | ❌ Absent = Orange | 🎉 Holiday = Blue
+</p>
+

@@ -1,0 +1,174 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Track Me — Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f6f8fb; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans"; }
+    .tm-container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .card-block { background:#fff; border-radius:16px; box-shadow:0 10px 24px rgba(0,0,0,.06); padding:20px; border:0; }
+    .cal-header, .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+    .cal-cell { background:#fff; border-radius:12px; padding:10px; min-height:76px; border:1px solid #eef1f6; position:relative; }
+    .cal-cell.out { background:#fafbfc; color:#c5ccd8; }
+    .pill { display:inline-block; font-size:.75rem; padding:2px 8px; border-radius:999px; border:1px solid transparent; }
+    .pill-present { background:#e9f9ef; color:#16a34a; border-color:#b7eec8; }
+    .pill-absent { background:#feecec; color:#dc2626; border-color:#f9c2c2; }
+    .pill-holiday { background:#e8f0fe; color:#2563eb; border-color:#c7dbff; }
+    .pill-weekend { background:#f3f4f6; color:#6b7280; border-color:#e5e7eb; }
+    .legend .pill { margin-right:8px; }
+
+    @media (max-width: 575.98px) {
+      .cal-cell { min-height:56px; padding:8px; }
+    }
+
+    /* Tooltip styling */
+    .cal-cell[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      transform: translateY(-6px);
+      background: #111;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: pre-wrap;
+      max-width: 220px;
+      z-index: 10;
+      opacity: 0.95;
+    }
+
+    /* Fortune text animation */
+    .fortune-animate {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fortune-animate.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="tm-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="mb-0">Attendance</h2>
+      <div class="d-flex align-items-center gap-3">
+        <span class="fw-medium">{{ employee_name }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm">Logout</a>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- Calendar -->
+      <div class="col-lg-8">
+        <div class="card-block">
+          <!-- Nav + Month Picker -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'dashboard' %}?year={{ prev_year }}&month={{ prev_month }}">&lt;</a>
+              <div class="fw-semibold">{{ month_name }} {{ year }}</div>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'dashboard' %}?year={{ next_year }}&month={{ next_month }}">&gt;</a>
+            </div>
+            <form method="get" class="d-flex align-items-center gap-2">
+              <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for mnum, mname in months %}
+                  <option value="{{ mnum }}" {% if mnum == month %}selected{% endif %}>{{ mname }}</option>
+                {% endfor %}
+              </select>
+              <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for y in years %}
+                  <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+              </select>
+              <noscript><button class="btn btn-sm btn-primary">Go</button></noscript>
+            </form>
+          </div>
+
+          <!-- Days of week -->
+          <div class="cal-header text-secondary">
+            <div class="text-center small">Sun</div>
+            <div class="text-center small">Mon</div>
+            <div class="text-center small">Tue</div>
+            <div class="text-center small">Wed</div>
+            <div class="text-center small">Thu</div>
+            <div class="text-center small">Fri</div>
+            <div class="text-center small">Sat</div>
+          </div>
+
+          <!-- Grid -->
+          <div class="cal-grid mt-1">
+            {% for week in weeks %}
+              {% for cell in week %}
+                <div class="cal-cell {% if not cell.in_month %}out{% endif %}" data-tooltip="{{ cell.tooltip }}">
+                  <div class="fw-bold">{{ cell.date.day }}</div>
+                  {% if cell.in_month %}
+                    {% for tag in cell.badges %}
+                      {% if tag == "Present" %}
+                        <span class="pill pill-present">Present</span>
+                      {% elif tag == "Absent" %}
+                        <span class="pill pill-absent">Absent</span>
+                      {% elif tag == "Holiday" %}
+                        <span class="pill pill-holiday">Holiday</span>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div class="col-lg-4 d-flex flex-column gap-3">
+        <!-- Fortune Cookie -->
+        <div class="card-block text-center">
+          <h5 class="mb-3">Fortune Cookie</h5>
+          <img id="fortuneCookieImg"
+               src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExemRtdGtjb3pzeXUwbzN6bDAydjRkNHR1czg3eGpua3pvdzB6Zmc1eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/GEL0Ou8QD9vtqrZj5W/giphy.gif"
+               alt="Fortune Cookie"
+               style="width:300px; height:auto; cursor:pointer;" />
+          <p id="fortuneText" class="mt-3 fw-semibold fortune-animate d-none">
+            {{ fortune_msg }}
+          </p>
+        </div>
+
+        <script>
+          (function () {
+            const img = document.getElementById('fortuneCookieImg');
+            const text = document.getElementById('fortuneText');
+            if (!img || !text) return;
+            img.addEventListener('click', () => {
+              img.style.display = 'none';
+              text.classList.remove('d-none');
+              void text.offsetWidth;
+              text.classList.add('show');
+            }, { once: true });
+          })();
+        </script>
+
+        <!-- Admin/HR actions -->
+        {% if is_admin or is_hr %}
+        <div class="card-block">
+          <h5 class="mb-2">Admin Tools</h5>
+          <div class="d-grid gap-2">
+            <a href="{% url 'upload_attendance' %}" class="btn btn-outline-primary">Upload Attendance</a>
+            <a href="{% url 'manage_holidays' %}" class="btn btn-outline-primary">Manage Holidays</a>
+            <a href="{% url 'reports' %}" class="btn btn-outline-primary">Reports</a>
+            <a href="{% url 'defaulter_list' %}" class="btn btn-outline-primary">Defaulters</a>
+            <a href="{% url 'attendance_settings' %}" class="btn btn-outline-primary">Settings</a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

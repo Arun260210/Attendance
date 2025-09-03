@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Holidays — Track Me</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>Manage Holidays ({{ year }})</h3>
+      <div>
+        <a class="btn btn-secondary" href="{% url 'dashboard' %}">Back</a>
+        <form class="d-inline" method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-danger">Logout</button></form>
+      </div>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags }}">{{ m }}</div>{% endfor %}{% endif %}
+
+    <div class="card p-3 mb-3">
+      <form class="row g-3" method="get">
+        <div class="col-auto"><label class="col-form-label">Year</label></div>
+        <div class="col-auto"><input class="form-control" type="number" name="year" min="2000" max="2100" value="{{ year }}"></div>
+        <div class="col-auto"><button class="btn btn-primary">Go</button></div>
+      </form>
+    </div>
+
+    <div class="card p-3 mb-3">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add">
+        <div class="col-md-3"><label class="form-label">Date</label><input class="form-control" type="date" name="date" required></div>
+        <div class="col-md-5"><label class="form-label">Name</label><input class="form-control" type="text" name="name" required placeholder="e.g., Independence Day"></div>
+        <div class="col-md-3">
+          <label class="form-label">Type</label>
+          <select class="form-select" name="holiday_type" required>
+            <option value="PUBLIC">Public Holiday</option>
+            <option value="RESTRICTED">Restricted Holiday</option>
+          </select>
+        </div>
+        <div class="col-md-1 d-flex align-items-end"><button class="btn btn-success w-100">Add</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-striped mb-0">
+          <thead class="table-light"><tr><th>Date</th><th>Name</th><th>Type</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% if holidays %}
+              {% for h in holidays %}
+              <tr>
+                <td>{{ h.date }}</td><td>{{ h.name }}</td>
+                <td>{% if h.holiday_type == 'PUBLIC' %}Public{% else %}Restricted{% endif %}</td>
+                <td>
+                  <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" value="{{ h.id }}">
+                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this holiday?')">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="4" class="text-center text-muted py-3">No holidays found.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

@@ -1,0 +1,99 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Defaulters</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body{background:#f6f8fb}
+    .card{border:0;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.06)}
+    .badge-soft{background:#eef2ff;color:#374151}
+  </style>
+</head>
+<body class="p-3">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h3 class="mb-0">Defaulters</h3>
+      <div class="d-flex gap-2">
+        <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">Back</a>
+        <a href="{% url 'export_csv' %}" class="btn btn-sm btn-outline-primary">Export CSV</a>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card p-3 mb-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">Month</label>
+          <select name="month" class="form-select">
+            {% for mnum, mname in months %}
+              <option value="{{ mnum }}" {% if mnum == month %}selected{% endif %}>{{ mname }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Year</label>
+          <select name="year" class="form-select">
+            {% for y in years %}
+              <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Email (contains)</label>
+          <input type="text" name="email" value="{{ email_q }}" class="form-control" placeholder="@company.com or alice@">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Threshold (optional)</label>
+          <input type="number" name="threshold" min="0" class="form-control" placeholder="{{ threshold }}">
+        </div>
+        <div class="col-md-1 d-grid">
+          <button class="btn btn-primary">Apply</button>
+        </div>
+      </form>
+      <div class="text-end mt-2">
+        <a href="{% url 'defaulter_list' %}" class="small">Clear filters</a>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      Threshold in use: <strong>{{ threshold }}</strong> days (≈ {{ threshold_pct }}%)
+    </div>
+
+    <div class="card p-3">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th class="text-center">Present</th>
+              <th class="text-center">Working Days</th>
+              <th class="text-center">% Present</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if defaulters %}
+              {% for r in defaulters %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ r.employee_name }}</td>
+                  <td><span class="badge badge-soft">{{ r.email }}</span></td>
+                  <td class="text-center">{{ r.present_days }}</td>
+                  <td class="text-center">{{ r.total_days }}</td>
+                  <td class="text-center">{{ r.percentage }}%</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="6" class="text-center text-muted">No defaulters for this filter</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

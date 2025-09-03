@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Export Attendance — Track Me</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>.quick-btn{white-space:nowrap}</style>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>⬇️ Export Attendance (CSV)</h3>
+      <div>
+        <a class="btn btn-secondary" href="{% url 'dashboard' %}">Back</a>
+        <form class="d-inline" method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-danger">Logout</button></form>
+      </div>
+    </div>
+
+    <div class="card p-4">
+      <form method="get" action="{% url 'export_csv' %}" target="_blank" class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Employee Email (optional)</label>
+          <input type="email" class="form-control" name="email" placeholder="user@company.com">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">From</label>
+          <input type="date" class="form-control" name="from" id="fromDate">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">To</label>
+          <input type="date" class="form-control" name="to" id="toDate">
+        </div>
+        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-success w-100">Download</button></div>
+      </form>
+
+      <hr class="my-4">
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-primary quick-btn" onclick="setThisWeek()">This Week</button>
+        <button class="btn btn-outline-primary quick-btn" onclick="setThisMonth()">This Month</button>
+        <button class="btn btn-outline-primary quick-btn" onclick="setLastMonth()">Last Month</button>
+        <button class="btn btn-outline-secondary quick-btn" onclick="clearDates()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function ymd(d){const m=(d.getMonth()+1).toString().padStart(2,'0');const day=d.getDate().toString().padStart(2,'0');return `${d.getFullYear()}-${m}-${day}`;}
+    function setThisWeek(){const t=new Date();const day=t.getDay();const diff=(day===0?6:day-1);const mon=new Date(t);mon.setDate(t.getDate()-diff);const sun=new Date(mon);sun.setDate(mon.getDate()+6);fromDate.value=ymd(mon);toDate.value=ymd(sun);}
+    function setThisMonth(){const t=new Date();const first=new Date(t.getFullYear(), t.getMonth(), 1);const last=new Date(t.getFullYear(), t.getMonth()+1, 0);fromDate.value=ymd(first);toDate.value=ymd(last);}
+    function setLastMonth(){const t=new Date();const first=new Date(t.getFullYear(), t.getMonth()-1, 1);const last=new Date(t.getFullYear(), t.getMonth(), 0);fromDate.value=ymd(first);toDate.value=ymd(last);}
+    function clearDates(){fromDate.value='';toDate.value='';}
+    const fromDate=document.getElementById('fromDate'); const toDate=document.getElementById('toDate');
+  </script>
+</body>
+</html>
+

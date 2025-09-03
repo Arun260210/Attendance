@@ -1,0 +1,17 @@
+<h2>HR Report - Employees with Attendance < {{ threshold }} days ({{ month }}/{{ year }})</h2>
+
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Employee</th>
+        <th>Days Present</th>
+    </tr>
+    {% for row in report %}
+    <tr>
+        <td>{{ row.employee__username }}</td>
+        <td>{{ row.days_present }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2">All employees meet threshold ✅</td></tr>
+    {% endfor %}
+</table>
+
